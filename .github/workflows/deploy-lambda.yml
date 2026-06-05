@@ -1,66 +1,57 @@
 name: Deploy Lambda
 
-# ---------------------------------------------------------------------------
-# Despliegue de Lambdas a 3 ambientes (dev, staging, prod) con AWS SAM.
-#
-# Estrategia de disparo:
-#   - push a 'develop'  -> dev      (automático)
-#   - push a 'main'     -> staging  (automático)
-#   - prod              -> manual (workflow_dispatch) + aprobación obligatoria
-#                          vía GitHub Environment 'prod' (required reviewers)
-#
-# Autenticación: OIDC (sin access keys). Cada ambiente asume su propio rol IAM.
-# ---------------------------------------------------------------------------
-
 on:
   push:
     branches:
       - develop
       - staging
       - main
+  workflow_dispatch: # Permite también el disparo manual que mencionas en tus comentarios
 
-
-# Permisos mínimos para OIDC
 permissions:
-  id-token: write   # necesario para solicitar el token OIDC a AWS
+  id-token: write   # Necesario para OIDC
   contents: read
 
-# Evita despliegues concurrentes al mismo ambiente
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-
   # -------------------------------------------------------------------------
-  # 2.  deploy
+  # 1. Job para mapear la rama al entorno de GitHub
   # -------------------------------------------------------------------------
-  deploy:
-
+  set-environment:
     runs-on: ubuntu-latest
-    # El Environment aplica las protecciones (required reviewers en prod)
-    # y expone sus variables/secrets propios.
+    outputs:
+      env_name: ${{ steps.map.outputs.env_name }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Map branch to environment
-        id: envmap
+        id: map
         run: |
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "env_name=production" >> $GITHUB_OUTPUT
           elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
-            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "env_name=staging" >> $GITHUB_OUTPUT
           elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
-            echo "ENVIRONMENT=development" >> $GITHUB_ENV
+            echo "env_name=development" >> $GITHUB_OUTPUT
           else
             echo "Ref no Reconocido: $GITHUB_REF_NAME"
             exit 1
           fi
 
-      - name: Debug environment
-        run: |
-          echo "Running on environment: $ENVIRONMENT"
+  # -------------------------------------------------------------------------
+  # 2. Job de Despliegue (Bloquea el ambiente, carga secrets y pide aprobación)
+  # -------------------------------------------------------------------------
+  deploy:
+    needs: set-environment
+    runs-on: ubuntu-latest
+    
+    # Esto activa los revisores obligatorios de prod y carga los vars/secrets correctos
+    environment: ${{ needs.set-environment.outputs.env_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configurar Python 3.13
         uses: actions/setup-python@v5
@@ -75,8 +66,8 @@ jobs:
       - name: Autenticación AWS vía OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Se cargará el del ambiente correcto
+          aws-region: ${{ vars.AWS_REGION }}                 # Se cargará el del ambiente correcto
           role-session-name: gha-deploy-session
 
       - name: SAM build
@@ -85,12 +76,12 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-"$ENVIRONMENT \ 
-            --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-$ENVIRONMENT" \
+            --stack-name "${{ vars.STACK_NAME }}-${{ needs.set-environment.outputs.env_name }}" \
+            --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-${{ needs.set-environment.outputs.env_name }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "Environment=$ENVIRONMENT" \
-              "RedisHostParam=$ENVIRONMENT-redis-host" \
-              "DbHostParam=$ENVIRONMENT-db-host"
+              "Environment=${{ needs.set-environment.outputs.env_name }}" \
+              "RedisHostParam=${{ needs.set-environment.outputs.env_name }}-redis-host" \
+              "DbHostParam=${{ needs.set-environment.outputs.env_name }}-db-host"
