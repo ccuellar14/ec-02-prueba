@@ -54,7 +54,7 @@ jobs:
             echo "Ref no Reconocido: $GITHUB_REF_NAME"
             exit 1
           fi
-          
+
       - name: Debug environment
         run: |
           echo "Running on environment: $ENVIRONMENT"
@@ -78,7 +78,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-          role-session-name: gha-deploy-$ENVIRONMENT
+          role-session-name: "gha-deploy-$ENVIRONMENT"
 
       - name: SAM build
         run: sam build --use-container
