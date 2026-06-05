@@ -45,7 +45,6 @@ jobs:
   # 1. Build + deploy
   # -------------------------------------------------------------------------
   deploy:
-    needs: resolve
     runs-on: ubuntu-latest
     # El Environment aplica las protecciones (required reviewers en prod)
     # y expone sus variables/secrets propios.
