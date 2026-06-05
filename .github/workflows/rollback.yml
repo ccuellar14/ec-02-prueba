@@ -18,9 +18,9 @@ on:
         required: true
         type: choice
         options:
-          - dev
+          - development
           - staging
-          - prod
+          - production
       function_name:
         description: "Nombre de la función Lambda"
         required: true
