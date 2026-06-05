@@ -18,16 +18,7 @@ on:
       - develop
       - staging
       - main
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Ambiente destino"
-        required: true
-        type: choice
-        options:
-          - development
-          - staging
-          - production
+
 
 # Permisos mínimos para OIDC
 permissions:
@@ -40,26 +31,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # -------------------------------------------------------------------------
-  # 1. Set Environment variable based on branch or workflow input
-  # -------------------------------------------------------------------------
-  set-env:
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.envmap.outputs.environment }}
-    steps:
-      - name: Map branch to environment
-        id: envmap
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "ENVIRONMENT=production" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
-            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
-            echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          else
-            echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
-          fi
 
   # -------------------------------------------------------------------------
   # 2.  deploy
@@ -70,6 +41,19 @@ jobs:
     # El Environment aplica las protecciones (required reviewers en prod)
     # y expone sus variables/secrets propios.
     steps:
+      - name: Map branch to environment
+        id: envmap
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "master" ]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "APP_NAME=andy-api-production" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "APP_NAME=andy-api-staging" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
+            echo "APP_NAME=andy_api-unknown" >> $GITHUB_ENV
+          fi
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -97,7 +81,7 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-${{ needs.set-env.outputs.ENVIRONMENT }}" \ 
+            --stack-name "${{ vars.STACK_NAME }}-$ENVIRONMENT" \ 
             --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-${{ needs.set-env.outputs.ENVIRONMENT }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
