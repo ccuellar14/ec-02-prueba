@@ -41,6 +41,9 @@ jobs:
     # El Environment aplica las protecciones (required reviewers en prod)
     # y expone sus variables/secrets propios.
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Map branch to environment
         id: envmap
         run: |
@@ -59,9 +62,6 @@ jobs:
         run: |
           echo "Running on environment: $ENVIRONMENT"
           echo "App name: $APP_NAME"
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Configurar Python 3.13
         uses: actions/setup-python@v5
