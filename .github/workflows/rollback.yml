@@ -53,7 +53,7 @@ jobs:
       - name: Resolver versión destino
         id: target
         run: |
-          ALIAS="${{ inputs.environment }}" # Asumiendo el alias coincide con el ambiente
+          ALIAS="${{ inputs.environment }}" # Asumiendo el alias coincide con el ambientes
           FN="${{ inputs.function_name }}-${{ inputs.environment }}" # Asumiendo este formato dinámico en el nombre de la función
 
           TARGET="${{ inputs.target_version }}"
