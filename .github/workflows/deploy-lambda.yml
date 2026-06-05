@@ -54,6 +54,11 @@ jobs:
             echo "Ref no Reconocido: $GITHUB_REF_NAME"
             exit 1
           fi
+          
+      - name: Debug environment
+        run: |
+          echo "Running on environment: $ENVIRONMENT"
+          echo "App name: $APP_NAME"
 
       - name: Checkout
         uses: actions/checkout@v4
