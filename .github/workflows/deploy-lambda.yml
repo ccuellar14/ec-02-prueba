@@ -44,15 +44,14 @@ jobs:
       - name: Map branch to environment
         id: envmap
         run: |
-          if [ "${GITHUB_REF_NAME}" = "master" ]; then
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
             echo "ENVIRONMENT=production" >> $GITHUB_ENV
-            echo "APP_NAME=andy-api-production" >> $GITHUB_ENV
           elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
             echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-            echo "APP_NAME=andy-api-staging" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            echo "ENVIRONMENT=development" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
-            echo "APP_NAME=andy_api-unknown" >> $GITHUB_ENV
           fi
 
       - name: Checkout
