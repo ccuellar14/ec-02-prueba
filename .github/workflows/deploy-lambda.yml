@@ -49,7 +49,6 @@ jobs:
     runs-on: ubuntu-latest
     # El Environment aplica las protecciones (required reviewers en prod)
     # y expone sus variables/secrets propios.
-    environment: ${{ needs.resolve.outputs.environment }}
     steps:
       - name: Map branch to environment
         id: envmap
