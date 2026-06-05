@@ -97,12 +97,12 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-$ENVIRONMENT" \
-            --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-$ENVIRONMENT" \
+            --stack-name "${{ vars.STACK_NAME }}-${{ needs.set_env.outputs.ENVIRONMENT}}" \
+            --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-${{ needs.set_env.outputs.ENVIRONMENT}}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "Environment=$ENVIRONMENT" \
-              "RedisHostParam=$ENVIRONMENT-redis-host" \
-              "DbHostParam=$ENVIRONMENT-db-host"
+              "Environment=${{ needs.set_env.outputs.ENVIRONMENT }}" \
+              "RedisHostParam=${{ needs.set_env.outputs.ENVIRONMENT }}-redis-host" \
+              "DbHostParam=${{ needs.set_env.outputs.ENVIRONMENT }}-db-host"
