@@ -24,9 +24,9 @@ on:
         required: true
         type: choice
         options:
-          - dev
+          - developmen
           - staging
-          - prod
+          - production
 
 # Permisos mínimos para OIDC
 permissions:
@@ -70,6 +70,19 @@ jobs:
     # y expone sus variables/secrets propios.
     environment: ${{ needs.resolve.outputs.environment }}
     steps:
+      - name: Map branch to environment
+        id: envmap
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
+            echo "ENVIRONMENT=development" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
