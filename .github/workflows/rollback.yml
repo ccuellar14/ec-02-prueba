@@ -81,7 +81,7 @@ jobs:
       - name: Reapuntar alias (rollback)
         run: |
           aws lambda update-alias \
-            --function-name "${{ inputs.function_name }}" \
+            --function-name "${{ inputs.function_name }}-${{ inputs.environment }}" \
             --name "${{ inputs.environment }}" \
             --function-version "${{ steps.target.outputs.target }}"
           echo "✓ Rollback completado: alias '${{ inputs.environment }}' -> v${{ steps.target.outputs.target }}"
