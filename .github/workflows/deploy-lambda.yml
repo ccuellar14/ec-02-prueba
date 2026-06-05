@@ -95,5 +95,5 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides \
               "Environment=$ENVIRONMENT" \
-              "RedisHostParam=${{ vars.REDIS_HOST_SSM_PATH }}" \
-              "DbHostParam=${{ vars.DB_HOST_SSM_PATH }}"
+              "RedisHostParam=$ENVIRONMENT-redis-host" \
+              "DbHostParam=$ENVIRONMENT-db-host"
