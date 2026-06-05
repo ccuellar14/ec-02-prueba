@@ -90,7 +90,7 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-$ENVIRONMENT" \
+            --stack-name "${{ vars.STACK_NAME }}-"$ENVIRONMENT \
             --s3-bucket "${{ vars.ARTIFACT_BUCKET }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
