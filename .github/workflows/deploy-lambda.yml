@@ -24,7 +24,7 @@ on:
         required: true
         type: choice
         options:
-          - developmen
+          - development
           - staging
           - production
 
@@ -101,7 +101,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
-          role-session-name: gha-deploy-${{ needs.resolve.outputs.environment }}
+          role-session-name: gha-deploy-${{ ENVIRONMENT }}
 
       - name: SAM build
         run: sam build --use-container
@@ -109,12 +109,12 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-${{ needs.resolve.outputs.environment }}" \
+            --stack-name "${{ vars.STACK_NAME }}-${{ ENVIRONMENT }}" \
             --s3-bucket "${{ vars.ARTIFACT_BUCKET }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "Environment=${{ needs.resolve.outputs.environment }}" \
+              "Environment=${{ ENVIRONMENT }}" \
               "RedisHostParam=${{ vars.REDIS_HOST_SSM_PATH }}" \
               "DbHostParam=${{ vars.DB_HOST_SSM_PATH }}"
