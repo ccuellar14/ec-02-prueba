@@ -90,12 +90,12 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-"$ENVIRONMENT \
+            --stack-name "${{ vars.STACK_NAME }}-$ENVIRONMENT" \
             --s3-bucket "${{ vars.ARTIFACT_BUCKET }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides \
-              "Environment=${{ ENVIRONMENT }}" \
+              "Environment=$ENVIRONMENT" \
               "RedisHostParam=${{ vars.REDIS_HOST_SSM_PATH }}" \
               "DbHostParam=${{ vars.DB_HOST_SSM_PATH }}"
