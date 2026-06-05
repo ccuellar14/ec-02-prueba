@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - develop
+      - staging
       - main
   workflow_dispatch:
     inputs:
@@ -39,29 +40,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # -------------------------------------------------------------------------
-  # 1. Resolver a qué ambiente desplegar según el disparador
-  # -------------------------------------------------------------------------
-  resolve:
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.pick.outputs.environment }}
-    steps:
-      - id: pick
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            echo "environment=dev" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "environment=staging" >> "$GITHUB_OUTPUT"
-          else
-            echo "Rama no mapeada a ningún ambiente; abortando." >&2
-            exit 1
-          fi
 
   # -------------------------------------------------------------------------
-  # 2. Build + deploy
+  # 1. Build + deploy
   # -------------------------------------------------------------------------
   deploy:
     needs: resolve
