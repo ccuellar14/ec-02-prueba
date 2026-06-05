@@ -52,13 +52,14 @@ jobs:
         id: envmap
         run: |
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
           elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
           elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
-            echo "environment=development" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=development" >> $GITHUB_ENV
           else
-            echo "environment=unknown" >> $GITHUB_OUTPUT
+            echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
+          fi
 
   # -------------------------------------------------------------------------
   # 2.  deploy
@@ -69,18 +70,6 @@ jobs:
     # El Environment aplica las protecciones (required reviewers en prod)
     # y expone sus variables/secrets propios.
     steps:
-      - name: Map branch to environment
-        id: envmap
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "ENVIRONMENT=production" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF_NAME}" = "staging" ]; then
-            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-          elif [ "${GITHUB_REF_NAME}" = "develop" ]; then
-            echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          else
-            echo "ENVIRONMENT=unknown" >> $GITHUB_ENV
-          fi
 
       - name: Checkout
         uses: actions/checkout@v4
