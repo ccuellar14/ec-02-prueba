@@ -1,39 +1,35 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  prueba — generada automáticamente.
+  prueba — generada automáticamente y corregida para multi-ambiente.
 
 # ---------------------------------------------------------------------------
-# Parámetros inyectados por el pipeline (workflow deploy.yml)
+# Parámetros inyectados por el pipeline o samconfig.toml
 # ---------------------------------------------------------------------------
 Parameters:
   Environment:
     Type: String
-    AllowedValues: [dev, staging, prod]
+    AllowedValues: [development, staging, production] # Corregido: Coincide con GitHub Actions
     Description: Ambiente destino. Se usa también como nombre de alias.
  
   RedisHostParam:
     Type: String
-    Value: !Sub  "${Environment}-redis-host"  # Ejemplo: "dev-redis-host"
-    Description: Ruta SSM que contiene redis_host para este ambiente.
+    Description: Ruta SSM o Host de Redis para este ambiente. (Inyectado externamente)
  
   DbHostParam:
     Type: String
-    Value: !Sub  "${Environment}-db-host"  # Ejemplo: "dev-db-host"
-    Description: Ruta SSM que contiene db_host para este ambiente.
+    Description: Ruta SSM o Host de Base de Datos para este ambiente. (Inyectado externamente)
 
 # ---------------------------------------------------------------------------
-# Config de despliegue gradual por ambiente:
-#   - dev/staging: AllAtOnce (rápido, bajo riesgo)
-#   - prod:        Canary 10% por 5 min (detecta fallas antes del 100%)
+# Config de despliegue gradual por ambiente
 # ---------------------------------------------------------------------------
 Mappings:
   DeployConfig:
-    dev:
+    development: # Corregido para coincidir con el parámetro
       Type: AllAtOnce
     staging:
       Type: AllAtOnce
-    prod:
+    production: # Corregido para coincidir con el parámetro
       Type: Canary10Percent5Minutes
 
 Globals:
@@ -48,7 +44,7 @@ Resources:
   pruebaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: prueba-dev
+      FunctionName: !Sub "prueba-${Environment}" # Hecho dinámico: prueba-development, prueba-production, etc.
       CodeUri: ./
       Handler: lambda_function.lambda_handler
       Environment:
@@ -56,26 +52,26 @@ Resources:
           ENVIRONMENT: !Ref Environment
           REDIS_HOST: !Ref RedisHostParam
           DB_HOST: !Ref DbHostParam
+      
       # --- Clave del rollback optimizado ---
-      AutoPublishAlias: !Ref Environment      # crea/actualiza alias = nombre del ambiente
+      AutoPublishAlias: !Ref Environment # Crea/actualiza el alias dinámicamente
       DeploymentPreference:
         Type: !FindInMap [DeployConfig, !Ref Environment, Type]
         Alarms:
-          # Si estas alarmas se disparan durante el shift de tráfico,
-          # CodeDeploy revierte automáticamente al alias anterior.
           - !Ref ErrorsAlarm
-    # Alarma sobre errores de la función (versión nueva durante el shift)
+
+  # Alarma sobre errores de la función (versión nueva durante el shift de tráfico)
   ErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmDescription: !Sub "Errores en prueba-dev"
+      AlarmDescription: !Sub "Errores en función prueba para el ambiente ${Environment}"
       Namespace: AWS/Lambda
       MetricName: Errors
       Dimensions:
         - Name: FunctionName
           Value: !Ref pruebaFunction
         - Name: Resource
-          Value: !Sub "pruebaFunction:dev"
+          Value: !Sub "${pruebaFunction}:${Environment}" # Hecho dinámico para escuchar el alias correcto
       Statistic: Sum
       Period: 60
       EvaluationPeriods: 1
