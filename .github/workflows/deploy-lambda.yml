@@ -68,7 +68,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }} # Se cargará el del ambiente correcto
           aws-region: ${{ vars.AWS_REGION }}                 # Se cargará el del ambiente correcto
-          role-session-name: gha-deploy-session
+          role-session-name: gha-deploy-${{ needs.set-environment.outputs.env_name }}
 
       - name: SAM build
         run: sam build --use-container
@@ -76,8 +76,8 @@ jobs:
       - name: SAM deploy
         run: |
           sam deploy \
-            --stack-name "${{ vars.STACK_NAME }}-${{ needs.set-environment.outputs.env_name }}" \
-            --s3-bucket "${{ vars.ARTIFACT_BUCKET }}-${{ needs.set-environment.outputs.env_name }}" \
+            --stack-name "${{ github.event.repository.name }}-${{ needs.set-environment.outputs.env_name }}" \
+            --s3-bucket "${{ github.event.repository.name }}-${{ needs.set-environment.outputs.env_name }}" \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset \
